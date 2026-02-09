@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
@@ -11,9 +11,11 @@ class Student(BaseModel):
 
 db = {1:{"name":"om","marks":[10,20,30]},
       2:{"name":"harsh","marks":[10,20,30]} }
+
 @app.get("/")
 def menu():
     return f"Welcome to Student Management System enter /student to add a new student"
+
 @app.post("/student")
 def add_student(student_data:Student):
     new_id = max(db.keys())+1
@@ -34,7 +36,7 @@ def update_student(std_id:int,student_data:Student):
         db[std_id] = student_data
         return {f"Student {std_id} updated successfully"}
     else:
-        return {f"Student {std_id} does not exist"}
+        raise HTTPException(status_code=404, detail="Student does not exist")
 
 @app.delete("/student/{std_id}")
 def delete_student(std_id:int):
@@ -42,7 +44,7 @@ def delete_student(std_id:int):
         db.pop(std_id)
         return {f"Student {std_id} deleted successfully"}
     else:
-        return {f"Student {std_id} does not exist"}
+        raise HTTPException(status_code=404, detail="Student does not exist")
 
 @app.patch("/student/{std_id}")
 def patch_student(std_id:int,student_data:Student):
@@ -53,7 +55,7 @@ def patch_student(std_id:int,student_data:Student):
             db[std_id]["marks"] = student_data.marks
         return {f"Student {std_id} updated successfully"}
     else:
-        return {f"Student {std_id} does not exist"}
+        raise HTTPException(status_code=404, detail="Student does not exist")
 
 
 
