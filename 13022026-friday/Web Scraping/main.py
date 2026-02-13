@@ -11,8 +11,8 @@ def fetch_basic():
 
 
 def parse_html():
-    respose = requests.get(url)
-    soup = BeautifulSoup(respose.text, "html.parser")
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
 
     print(soup.title)
     print(soup.title.string)
@@ -70,7 +70,6 @@ def store_to_csv():
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
-
     # 1. Find all div tags with the class "highlight"
     codes = soup.select_one("div.highlight-default pre")
 
@@ -86,7 +85,35 @@ def store_to_csv():
         # 4. Now writerows receives a list of dicts, which it expects
         writer.writerows(data_to_save)
 
+def link_extractor():
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
 
+    a = soup.find_all("a")
+    for link in a:
+        l1 = link.get("href")
+        print(f"{url+l1}")
+
+def image_extractor():
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    img = soup.find_all("img")
+
+    for im in img:
+        print(im.get("src"))
+        print(im.get("alt"))
+
+
+def get_table():
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+        for row in rows:
+            cols = row.find_all("td")
+            data = [ele.text.strip() for ele in cols]
+            print(f"Table Rows {data}")
 
 
 if __name__ == "__main__":
@@ -96,4 +123,7 @@ if __name__ == "__main__":
     # extract_attributes()
     # merge_section_and_ptag()
     # store_to_list()
-    store_to_csv()
+    # store_to_csv()
+    # link_extractor()
+    # image_extractor()
+    get_table()
