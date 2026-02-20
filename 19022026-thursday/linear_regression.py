@@ -23,7 +23,7 @@ print("Unique values in each feature")
 for i in df.columns:
     print(f"{i} : {df[i].nunique()}")
 
-
+    
 
 # Data Preprocessing
 # concise summary
