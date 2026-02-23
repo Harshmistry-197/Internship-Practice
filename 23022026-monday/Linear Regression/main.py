@@ -9,7 +9,7 @@ df = load_diabetes()
 X = df.data
 y = df.target
 
-X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=10)
 
 scaling = StandardScaler()
 X_train = scaling.fit_transform(X_train)
