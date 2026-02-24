@@ -83,26 +83,26 @@ def checking_outliers(x):
 def dependent_data_distribution(y):
     print(y.value_counts())
 
-def encoding_features(X, y):
+def encoding_features(x, y):
     le = LabelEncoder()
-    X['gender'] = le.fit_transform(X['gender'])
-    X['international'] = le.fit_transform(X['international'])
+    x['gender'] = le.fit_transform(x['gender'])
+    x['international'] = le.fit_transform(x['international'])
 
-    X = pd.get_dummies(X, columns=["major", 'race', 'work_industry'], drop_first=True, dtype=int)
+    x = pd.get_dummies(x, columns=["major", 'race', 'work_industry'], drop_first=True, dtype=int)
 
     y = le.fit_transform(y)
-    return X, y
+    return x, y
 
 
-def smote(X_Train, y_Train):
-    smote = SMOTE()
-    x_rain_res, y_rain_res = smote.fit_resample(X_Train, y_Train)
+def smote(x_train, y_traine):
+    smotee = SMOTE()
+    x_rain_res, y_rain_res = smotee.fit_resample(x_train, y_traine)
     return x_rain_res, y_rain_res
 
 
 def train_model(x_train, ytrain):
-    classifier = DecisionTreeClassifier(criterion='log_loss',min_samples_leaf=20, max_depth=20, max_leaf_nodes=15, random_state=42,
-                                        ccp_alpha=0.0, max_features='sqrt')
+    classifier = DecisionTreeClassifier(criterion='log_loss', min_samples_leaf=20, max_depth=20, max_leaf_nodes=15,
+                                        random_state=42, ccp_alpha=0.0, max_features='sqrt', class_weight='balanced')
     classifier.fit(x_train, ytrain)
     return classifier
 
