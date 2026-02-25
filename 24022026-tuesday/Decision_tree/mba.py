@@ -101,7 +101,7 @@ def smote(x_train, y_traine):
 
 
 def train_model(x_train, ytrain):
-    classifier = DecisionTreeClassifier(criterion='log_loss', min_samples_leaf=20, max_depth=20, max_leaf_nodes=15,
+    classifier = DecisionTreeClassifier(criterion='log_loss', min_samples_leaf=20, max_depth=None, max_leaf_nodes=15,
                                         random_state=42, ccp_alpha=0.0, max_features='sqrt', class_weight='balanced')
     classifier.fit(x_train, ytrain)
     return classifier
