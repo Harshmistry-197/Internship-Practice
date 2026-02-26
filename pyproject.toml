@@ -21,7 +21,8 @@ dependencies = [
     "seaborn (>=0.13.2,<0.14.0)",
     "scikit-learn (>=1.8.0,<2.0.0)",
     "matplotlib (>=3.10.8,<4.0.0)",
-    "imblearn (>=0.0,<0.1)"
+    "imblearn (>=0.0,<0.1)",
+    "category-encoders (>=2.9.0,<3.0.0)"
 ]
 
 
