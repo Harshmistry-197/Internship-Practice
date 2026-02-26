@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import logging
+from sklearn.tree import plot_tree
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -41,7 +42,7 @@ class Flight:
         self.y_train = None
         self.X_test = None
         self.y_test = None
-        self.model = RandomForestRegressor(n_estimators = 50, max_depth=10, min_samples_leaf=9, ccp_alpha=0.001,
+        self.model = RandomForestRegressor(n_estimators = 50, max_depth=5, min_samples_leaf=9, ccp_alpha=0.001,
                                            verbose=2, random_state=42)
 
         self.preprocessing = None
@@ -140,6 +141,13 @@ class Flight:
         self.regressor.fit(self.X_train, self.y_train)
         print("Model Training Completed", end=seprator)
         logging.info("Model Training Completed")
+
+        trained_model = self.regressor.named_steps['model']
+        single_tree = trained_model.estimators_[0]
+        plt.figure(figsize=(20, 10))
+        plot_tree(single_tree, filled=True, max_depth=2,
+                  feature_names=self.regressor.named_steps['preprocessor'].get_feature_names_out())
+        plt.show()
 
     def model_evaluation(self):
         """Predicts test values and prints regression metrics (R2, MAE, MSE)."""
