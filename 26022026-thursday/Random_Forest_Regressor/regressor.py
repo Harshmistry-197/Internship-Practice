@@ -15,7 +15,19 @@ logging.basicConfig(filename="flight.log",filemode='w',level=logging.INFO, forma
 seprator = f"\n\n{'-'*60}\n\n"
 
 class Flight:
+    """
+    A class to handle the end-to-end pipeline for flight price prediction,
+    including data loading, EDA, preprocessing, and model training.
+    """
+
     def __init__(self, file_path, test_size=0.2, random_state=42):
+        """
+        Initializes the Flight class with dataset path and split parameters.
+        Args:
+        file_path (str): Path to the CSV dataset.
+        test_size (float): Proportion of the dataset to include in the test split.
+        random_state (int): Controls the shuffling applied to the data before the split.
+        """
 
         self.file_path = file_path
         self.test_size = test_size
@@ -37,6 +49,8 @@ class Flight:
         self.encoder = OneHotEncoder(handle_unknown='ignore', drop="first")
 
     def load(self):
+        """Loads the dataset from the specified file path and drops irrelevant columns."""
+
         logging.info("Loading data...")
         self.df = pd.read_csv(self.file_path)
         self.df.drop(['Unnamed: 0','flight'], axis=1, inplace=True)
@@ -44,6 +58,7 @@ class Flight:
         logging.info(f"Loaded Successfully with rows and columns : {self.df.shape}")
 
     def stats(self):
+        """Prints and logs concise statistical summaries, duplicates, and null values."""
 
         logging.info(f"COncise Analysis")
         print(self.df.info(), end= seprator)
@@ -58,12 +73,17 @@ class Flight:
 
 
     def x_and_y_split(self):
+        """Splits the dataframe into features (X) and target (y)."""
 
         self.X = self.df.drop(['price'], axis=1)
         self.y = self.df['price']
 
 
     def eda_and_outliers(self):
+        """
+        Performs Exploratory Data Analysis by plotting a correlation heatmap
+        and handles outliers in numeric columns using the IQR clipping method.
+        """
 
         logging.info("EDA Started")
         logging.info("Heatmap of Data")
@@ -91,6 +111,8 @@ class Flight:
         logging.info("EDA Completed")
 
     def encoding(self):
+        """Creates a ColumnTransformer pipeline for OneHotEncoding categorical variables."""
+
         logging.info("Encoder Pipline Started")
         cat_cols = self.df.select_dtypes(include=["str"]).columns
         self.preprocessing = ColumnTransformer(transformers=[("categorical", self.encoder, cat_cols)],
@@ -99,6 +121,8 @@ class Flight:
         logging.info("Encoder Pipline Completed")
 
     def train_test_split(self):
+        """Splits the cleaned data into training and testing sets."""
+
         logging.info("train_test_split Started")
         self.X = self.df.drop(columns="price")
         self.y = self.df["price"]
@@ -109,6 +133,8 @@ class Flight:
         logging.info("Train Test Split Completed")
 
     def model_training(self):
+        """Initializes the ML pipeline (preprocessor + regressor) and fits it to the training data."""
+
         logging.info("Model Training Started")
         self.regressor = Pipeline(steps=[("preprocessor", self.preprocessing), ("model", self.model)])
         self.regressor.fit(self.X_train, self.y_train)
@@ -116,6 +142,8 @@ class Flight:
         logging.info("Model Training Completed")
 
     def model_evaluation(self):
+        """Predicts test values and prints regression metrics (R2, MAE, MSE)."""
+
         logging.info("Model Evaluation Started")
         y_pred = self.regressor.predict(self.X_test)
         print(f"The R2_Score is :- {r2_score(self.y_test,y_pred) * 100:.2f}%")
@@ -126,6 +154,8 @@ class Flight:
 
 
 def main():
+    """Main execution block to run the flight price prediction pipeline."""
+
     path = "flght_price_prediction.csv"
     model = Flight(path)
     model.load()
