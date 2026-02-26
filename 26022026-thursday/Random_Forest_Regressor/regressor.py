@@ -29,7 +29,8 @@ class Flight:
         self.y_train = None
         self.X_test = None
         self.y_test = None
-        self.model = RandomForestRegressor(n_estimators = 3, max_depth=2, min_samples_leaf=5, ccp_alpha=0.001)
+        self.model = RandomForestRegressor(n_estimators = 50, max_depth=10, min_samples_leaf=9, ccp_alpha=0.001,
+                                           verbose=2, random_state=42)
 
         self.preprocessing = None
         self.regressor = None
