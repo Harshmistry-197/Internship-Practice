@@ -8,6 +8,7 @@ from sklearn.metrics import classification_report,confusion_matrix, accuracy_sco
 import category_encoders as ce
 
 sep = f"\n{'-'*50}\n"
+
 class MSSQLData:
     def __init__(self,server,database,driver ="ODBC+Driver+17+for+SQL+Server"):
         """
@@ -28,6 +29,7 @@ class MSSQLData:
         """
         Loading table from server
         """
+
         query = f"SELECT * FROM {table_name}"
         dataframe = pd.read_sql(query, self.engine)
         return dataframe
@@ -36,6 +38,7 @@ class MSSQLData:
         """
         Loading query from server
         """
+
         dataframe = pd.read_sql(text(query), self.engine)
         return dataframe
 
@@ -129,6 +132,7 @@ class Carevalution:
         encoder = ce.OrdinalEncoder(cols=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
         self.X_train = encoder.fit_transform(self.X_train)
         self.X_test = encoder.transform(self.X_test)
+        self.X = encoder.fit_transform(self.X)
 
 
     def model_training(self):
@@ -149,6 +153,13 @@ class Carevalution:
         print(f"The confusion matrix :\n {confusion_matrix(self.y_test, y_pred)}")
         return y_pred
 
+    def save_predictions(self, engine, table_name, df, model):
+
+        print("Saving predictions...")
+        predictions = model.predict(self.X)
+        df["predicted_class"] = predictions
+        df.to_sql(table_name, engine, if_exists="replace", index=False)
+        print("Predictions column added/updated successfully")
 
 
 
@@ -176,8 +187,13 @@ def main():
     model.train_test_split()
     model.feature_encoding()
     classifier = model.model_training()
-    predict = model.model_evaluation(classifier)
-
+    model.model_evaluation(classifier)
+    model.save_predictions(
+        engine=loader.engine,
+        table_name='car_evaluation',
+        df=df,
+        model=classifier
+    )
 
 
 if __name__ == "__main__":
