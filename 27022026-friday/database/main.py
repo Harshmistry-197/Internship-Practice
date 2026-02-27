@@ -84,7 +84,7 @@ class Carevalution:
         print("The Statistical Summary \n")
         print(f"{self.df.describe()}\n", end=sep)
 
-        print(f"Checking for dupliactes")
+        print(f"Checking for duplicates")
         print(f"{self.df.duplicated().sum()}\n", end=sep)
 
         print(f"Checking for Null values")
@@ -100,7 +100,7 @@ class Carevalution:
         self.y = self.df['class']
 
     def eda_and_outliers(self):
-        """Generates visualizations (Boxplots, Pie charts, Histograms) for the features."""
+        """Generates visualizations (Box plots, Pie charts, Histograms) for the features."""
 
         self.X['doors'] = self.X['doors'].replace('5more', 5).astype(int)
         self.X['persons'] = self.X['persons'].replace('more', 6).astype(int)
