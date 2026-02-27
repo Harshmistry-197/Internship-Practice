@@ -10,6 +10,10 @@ import category_encoders as ce
 sep = f"\n{'-'*50}\n"
 
 class MSSQLData:
+    """
+    Handles connections and data retrieval from Microsoft SQL Server.
+    """
+
     def __init__(self,server,database,driver ="ODBC+Driver+17+for+SQL+Server"):
         """
         connecting database
@@ -44,8 +48,19 @@ class MSSQLData:
 
 
 class Carevalution:
+    """
+    ML Pipeline for car evaluation, including EDA, Preprocessing, and Database Export.
+    """
 
     def __init__(self, df, test_size = 0.2, random_state = 42):
+        """
+        Initializes the model pipeline with a dataframe.
+        Args:
+        df (pd.DataFrame): The input dataset.
+        test_size (float): Proportion of data for testing.
+        random_state (int): Seed for reproducibility.
+        """
+
         self.random_state = random_state
         self.test_size = test_size
 
@@ -60,6 +75,8 @@ class Carevalution:
 
 
     def analysis(self):
+        """Prints a comprehensive summary of the dataset including nulls and duplicates."""
+
         print("Analysis of data...")
 
         print("Concise Summary \n")
@@ -75,6 +92,7 @@ class Carevalution:
 
 
     def split_x_and_y(self):
+        """Splits the dataframe into features (X) and target variable (y)."""
 
         print("Splitting data...", end=sep)
 
@@ -82,6 +100,7 @@ class Carevalution:
         self.y = self.df['class']
 
     def eda_and_outliers(self):
+        """Generates visualizations (Boxplots, Pie charts, Histograms) for the features."""
 
         self.X['doors'] = self.X['doors'].replace('5more', 5).astype(int)
         self.X['persons'] = self.X['persons'].replace('more', 6).astype(int)
@@ -127,7 +146,7 @@ class Carevalution:
                                                                                  random_state=self.random_state)
 
     def feature_encoding(self):
-
+        """Encodes categorical strings into ordinal integers."""
 
         encoder = ce.OrdinalEncoder(cols=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
         self.X_train = encoder.fit_transform(self.X_train)
@@ -136,6 +155,11 @@ class Carevalution:
 
 
     def model_training(self):
+        """
+        Trains a Random Forest Classifier.
+        Returns:
+        RandomForestClassifier: Trained model instance.
+        """
 
         rfc = RandomForestClassifier(n_estimators=20,min_samples_split=5, max_depth=20, min_samples_leaf=10,
                                      random_state=42)
@@ -144,6 +168,14 @@ class Carevalution:
         return rfc
 
     def model_evaluation(self, rfc):
+        """
+        Evaluates model performance and prints metrics.
+        Args:
+        rfc (RandomForestClassifier): The trained classifier.
+        Returns:
+        np.array: Model predictions on test set.
+        """
+
         y_pred = rfc.predict(self.X_test)
         y_prob = rfc.predict_proba(self.X_test)
         print(f"The classification report is : \n {classification_report(y_pred, self.y_test)}:")
@@ -154,6 +186,14 @@ class Carevalution:
         return y_pred
 
     def save_predictions(self, engine, table_name, df, model):
+        """
+        Appends predictions to the dataframe and writes it back to SQL Server.
+        Args:
+        engine (sqlalchemy.engine): Database engine connection.
+        table_name (str): Target table name in SQL.
+        df (pd.DataFrame): Original dataframe to update.
+        model (RandomForestClassifier): Trained model to generate predictions.
+        """
 
         print("Saving predictions...")
         predictions = model.predict(self.X)
@@ -164,16 +204,14 @@ class Carevalution:
 
 
 def main():
+    """Main execution flow: SQL -> ML -> SQL."""
 
-    # Database credentials
     server = "localhost"
     database = "harsh"
 
-    # Initialize loader
     loader = MSSQLData(server, database)
 
 
-    # Load data from table
     df = loader.load_table("car_evaluation")
 
     print("Original Data:")
