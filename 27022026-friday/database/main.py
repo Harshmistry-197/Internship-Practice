@@ -1,15 +1,23 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report,confusion_matrix, accuracy_score,roc_auc_score
+import category_encoders as ce
 
-
+sep = f"\n{'-'*50}\n"
 class MSSQLData:
     def __init__(self,server,database,driver ="ODBC+Driver+17+for+SQL+Server"):
         """
         connecting database
         """
+
         connection_string = (
             f"mssql+pyodbc://{server}/{database}?driver={driver}"
         )
+
         try:
             self.engine = create_engine(connection_string)
             print("Engine created successfully!")
@@ -32,6 +40,116 @@ class MSSQLData:
         return dataframe
 
 
+class Carevalution:
+
+    def __init__(self, df, test_size = 0.2, random_state = 42):
+        self.random_state = random_state
+        self.test_size = test_size
+
+        self.X = None
+        self.y = None
+        self.df = df
+
+        self.X_train = None
+        self.y_train = None
+        self.X_test = None
+        self.y_test = None
+
+
+    def analysis(self):
+        print("Analysis of data...")
+
+        print("Concise Summary \n")
+        print(f"{self.df.info()}\n")
+        print("The Statistical Summary \n")
+        print(f"{self.df.describe()}\n", end=sep)
+
+        print(f"Checking for dupliactes")
+        print(f"{self.df.duplicated().sum()}\n", end=sep)
+
+        print(f"Checking for Null values")
+        print(f"{self.df.isnull().sum()}\n", end=sep)
+
+
+    def split_x_and_y(self):
+
+        print("Splitting data...", end=sep)
+
+        self.X = self.df.drop(['class'], axis=1)
+        self.y = self.df['class']
+
+    def eda_and_outliers(self):
+
+        self.X['doors'] = self.X['doors'].replace('5more', 5).astype(int)
+        self.X['persons'] = self.X['persons'].replace('more', 6).astype(int)
+
+        print("Box Plot of ['doors', 'persons'] ")
+        columns = ['doors', 'persons']
+        for i,col in enumerate(columns):
+            plt.subplot(1,2,i+1)
+            plt.grid(alpha=0.2)
+            plt.title(col)
+            sns.boxplot(x=self.X[col], data=self.X)
+        plt.tight_layout()
+        plt.show()
+
+
+        print("Pie Chart of ['buying', 'maint','lug_boot', 'safety'] ")
+        columns = ['buying', 'maint','lug_boot', 'safety']
+        for i,col in enumerate(columns):
+            plt.subplot(2,2,i+1)
+            plt.grid(alpha=0.2)
+            plt.title(col)
+            plt.pie(self.df[col].value_counts(), autopct='%1.1f%%', labels=self.df[col].value_counts().index,
+                    colors=sns.color_palette())
+        plt.tight_layout()
+        plt.show()
+
+        print("Histogram of ['doors', 'persons']")
+        columns = ['doors', 'persons']
+        for i,col in enumerate(columns):
+            plt.subplot(1,2,i+1)
+            plt.grid(alpha=0.2)
+            plt.title(col)
+            sns.histplot(self.df[col], kde=True)
+        plt.tight_layout()
+        plt.show()
+
+
+    def train_test_split(self):
+        """Splits data into Training and Testing sets."""
+
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y,
+                                                                                 test_size=self.test_size,
+                                                                                 random_state=self.random_state)
+
+    def feature_encoding(self):
+
+
+        encoder = ce.OrdinalEncoder(cols=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
+        self.X_train = encoder.fit_transform(self.X_train)
+        self.X_test = encoder.transform(self.X_test)
+
+
+    def model_training(self):
+
+        rfc = RandomForestClassifier(n_estimators=20,min_samples_split=5, max_depth=20, min_samples_leaf=10,
+                                     random_state=42)
+        rfc.fit(self.X_train, self.y_train)
+
+        return rfc
+
+    def model_evaluation(self, rfc):
+        y_pred = rfc.predict(self.X_test)
+        y_prob = rfc.predict_proba(self.X_test)
+        print(f"The classification report is : \n {classification_report(y_pred, self.y_test)}:")
+        print(f"The accuracy is :  {accuracy_score(y_pred, self.y_test)}")
+        score = roc_auc_score(self.y_test, y_prob, multi_class='ovr')
+        print(f"The roc_auc_score is :  {score}")
+        print(f"The confusion matrix :\n {confusion_matrix(self.y_test, y_pred)}")
+        return y_pred
+
+
 
 
 def main():
@@ -49,6 +167,16 @@ def main():
 
     print("Original Data:")
     print(df.head())
+
+
+    model = Carevalution(df)
+    model.analysis()
+    model.split_x_and_y()
+    model.eda_and_outliers()
+    model.train_test_split()
+    model.feature_encoding()
+    classifier = model.model_training()
+    predict = model.model_evaluation(classifier)
 
 
 
