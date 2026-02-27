@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.tree import plot_tree
 from sqlalchemy import create_engine, text
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -96,7 +97,7 @@ class Carevalution:
 
         print("Splitting data...", end=sep)
 
-        self.X = self.df.drop(['class'], axis=1)
+        self.X = self.df[['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety']]
         self.y = self.df['class']
 
     def eda_and_outliers(self):
@@ -154,7 +155,7 @@ class Carevalution:
         self.X = encoder.fit_transform(self.X)
 
 
-    def model_training(self):
+    def model_training(self, tree_index = 0):
         """
         Trains a Random Forest Classifier.
         Returns:
@@ -164,6 +165,13 @@ class Carevalution:
         rfc = RandomForestClassifier(n_estimators=20,min_samples_split=5, max_depth=20, min_samples_leaf=10,
                                      random_state=42)
         rfc.fit(self.X_train, self.y_train)
+
+
+        single_tree = rfc.estimators_[tree_index]
+        plt.figure(figsize=(20, 10))
+        plot_tree(single_tree, filled=True, max_depth=2,
+                  feature_names=self.X_train.columns)
+        plt.show()
 
         return rfc
 
