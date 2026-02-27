@@ -8,9 +8,20 @@ from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
 
 sep = f"\n\n{'-'*50}\n\n"
 
-class Car_evalution:
+class Carevalution:
+    """
+    A pipeline class for car evaluation data analysis, preprocessing, and classification.
+    """
 
     def __init__(self, file_path, test_size = 0.2, random_state = 42,):
+        """
+        Initializes the Carevalution instance with file path and split parameters.
+        Args:
+        file_path (str): Path to the CSV dataset.
+        test_size (float): Proportion of the dataset to include in the test split.
+        random_state (int): Seed for reproducible results.
+        """
+
         self.file_path = file_path
         self.random_state = random_state
         self.test_size = test_size
@@ -27,12 +38,16 @@ class Car_evalution:
         self.y_test = None
 
     def load_data(self):
+        """Loads the dataset from the specified CSV path."""
+
         print("Loading data...", end=sep)
         self.df = pd.read_csv(self.file_path)
         print(f"Data loaded : {self.df.shape}", end=sep)
 
 
     def analysis(self):
+        """Performs initial data exploration including summary stats, duplicates, and null checks."""
+
         print("Analysis of data...")
 
         print("Concise Summary \n")
@@ -48,6 +63,7 @@ class Car_evalution:
 
 
     def split_x_and_y(self):
+        """Separates features (X) from the target label (y)."""
 
         print("Splitting data...", end=sep)
 
@@ -55,6 +71,10 @@ class Car_evalution:
         self.y = self.df['class']
 
     def eda_and_outliers(self):
+        """
+        Executes Exploratory Data Analysis (EDA) including heatmaps, box plots,
+        pie charts, and histograms.
+        """
 
         self.X['doors'] = self.X['doors'].replace('5more', 5).astype(int)
         self.X['persons'] = self.X['persons'].replace('more', 6).astype(int)
@@ -115,7 +135,7 @@ class Car_evalution:
                                                                                  random_state=self.random_state)
 
     def feature_encoding(self):
-
+        """Applies Ordinal Encoding to categorical features to prepare them for the model."""
 
         encoder = ce.OrdinalEncoder(cols=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
         self.X_train = encoder.fit_transform(self.X_train)
@@ -123,6 +143,11 @@ class Car_evalution:
 
 
     def model_training(self):
+        """
+        Trains a RandomForestClassifier with pre-defined hyperparameters.
+        Returns:
+        RandomForestClassifier: The fitted model object.
+        """
 
         rfc = RandomForestClassifier(n_estimators=20,min_samples_split=5, max_depth=20, min_samples_leaf=10,
                                      random_state=42)
@@ -131,6 +156,12 @@ class Car_evalution:
         return rfc
 
     def model_evaluation(self, rfc):
+        """
+        Evaluates the model performance using Accuracy, AUC-ROC, and Confusion Matrix.
+        Args:
+        rfc (RandomForestClassifier): The trained model to evaluate.
+        """
+
         y_pred = rfc.predict(self.X_test)
         y_prob = rfc.predict_proba(self.X_test)
         print(f"The classification report is :  {classification_report(y_pred, self.y_test)}:")
@@ -142,12 +173,11 @@ class Car_evalution:
 
 
 
-
-
-
 def main():
+    """Execution entry point."""
+
     path = "car_evaluation.csv"
-    model = Car_evalution(path)
+    model = Carevalution(path)
     model.load_data()
     model.analysis()
     model.split_x_and_y()
