@@ -9,9 +9,13 @@ from sklearn.metrics import confusion_matrix, classification_report, accuracy_sc
 seperator = f"\n\n{'-'*60}\n\n"
 
 class Customer:
+    """
+    A class to handle the end-to-end pipeline for predicting customer purchases
+    using a Support Vector Machine (SVM) classifier.
+    """
 
     def __init__(self,file_path,test_size = 0.2, random_state = 42):
-
+        """Initializes the Customer class with data path and split parameters."""
 
         self.file_path = file_path
         self.test_size = test_size
@@ -28,7 +32,7 @@ class Customer:
         self.y_test = None
 
     def load_data(self):
-
+        """Loads the CSV file and removes unnecessary identification columns."""
 
         print("Loading data...", end=seperator)
         self.df = pd.read_csv(self.file_path)
@@ -39,7 +43,7 @@ class Customer:
         return self.df
 
     def analyze_data(self):
-
+        """Prints basic statistics, info, null values, and duplicates in the dataset."""
 
         print("Analyzing data... \n")
         print("The concise analysis of data\n")
@@ -57,7 +61,7 @@ class Customer:
 
 
     def split_data(self):
-
+        """Separates the features (X) from the target variable (Y)."""
 
         print("Splitting data...")
 
@@ -67,7 +71,7 @@ class Customer:
 
 
     def eda_outliers(self):
-
+        """Visualizes data relationships and detects outliers using the IQR method."""
 
         print("Eda Outliers...")
         print("Heatmap of Data", end=seperator)
@@ -94,7 +98,7 @@ class Customer:
 
 
     def feature_encoding(self):
-
+        """Encodes categorical text data into numerical format."""
 
         print("Feature Encoding...", end=seperator)
         le = LabelEncoder()
@@ -102,7 +106,7 @@ class Customer:
 
 
     def train_test_split(self):
-
+        """Splits the dataset into training and testing subsets."""
 
         print("Training and Testing Data Splitting...")
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.Y,
@@ -111,7 +115,7 @@ class Customer:
 
 
     def feature_scaling(self):
-
+        """Standardizes features by removing the mean and scaling to unit variance."""
 
         print("Feature Scaling...")
         scaler = StandardScaler()
@@ -119,14 +123,14 @@ class Customer:
         self.X_test = scaler.transform(self.X_test)
 
     def model_training(self):
-
+        """Trains a Support Vector Machine classifier on the training data."""
 
         svm = SVC(kernel='linear', random_state = self.random_state)
         svm.fit(self.X_train, self.y_train)
         return svm
 
     def model_evaluation(self, sv):
-
+        """Evaluates the model and prints accuracy, confusion matrix, and classification report."""
 
         y_pred = sv.predict(self.X_test)
         print("Model Evaluation...")
@@ -136,7 +140,7 @@ class Customer:
 
 
 def main():
-
+    """Execution entry point."""
 
     model = Customer(file_path = "customer_purchase_data.csv")
     model.load_data()
