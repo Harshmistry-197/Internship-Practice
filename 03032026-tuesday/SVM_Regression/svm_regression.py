@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+import numpy as np
 
 seperator = f"\n\n{'-'*60}\n\n"
 
@@ -138,6 +139,39 @@ class Customer:
         print("The Confusion Matrix: \n", confusion_matrix(self.y_test, y_pred, labels=[0,1]))
         print("The Accuracy Score: \n", accuracy_score(self.y_test, y_pred))
 
+    def plot_decision_boundary(self, kernel='linear', C=1.0):
+        """
+        X: DataFrame or array with columns [Age, Estimated Salary]
+        y: Target array (Purchased)
+        """
+
+        X_subset = self.X.iloc[:, -2:].values if hasattr(self.X, 'iloc') else self.X[:, -2:]
+        sc = StandardScaler()
+        X_scaled = sc.fit_transform(X_subset)
+
+        model = SVC(kernel=kernel, C=C)
+        model.fit(X_scaled, self.Y)
+
+        h = .02
+        x_min, x_max = X_scaled[:, 0].min() - 1, X_scaled[:, 0].max() + 1
+        y_min, y_max = X_scaled[:, 1].min() - 1, X_scaled[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                             np.arange(y_min, y_max, h))
+
+        Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+
+        plt.figure(figsize=(10, 6))
+        plt.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.8)
+
+        plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=self.Y,
+                    cmap=plt.cm.coolwarm, edgecolors='k')
+
+        plt.title(f"SVM Decision Boundary (Age vs Salary)\nKernel: {kernel}")
+        plt.xlabel('Age (Standardized)')
+        plt.ylabel('Estimated Salary (Standardized)')
+        plt.show()
+
 
 def main():
     """Execution entry point."""
@@ -152,6 +186,7 @@ def main():
     model.feature_scaling()
     classifier = model.model_training()
     model.model_evaluation(classifier)
+    model.plot_decision_boundary()
 
 
 if __name__ == "__main__":
