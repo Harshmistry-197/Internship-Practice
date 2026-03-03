@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
@@ -32,6 +32,7 @@ class Customer:
         self.X_test = None
         self.y_test = None
 
+
     def load_data(self):
         """Loads the CSV file and removes unnecessary identification columns."""
 
@@ -42,6 +43,7 @@ class Customer:
         self.df = self.df.drop(columns="user_id")
 
         return self.df
+
 
     def analyze_data(self):
         """Prints basic statistics, info, null values, and duplicates in the dataset."""
@@ -58,7 +60,6 @@ class Customer:
 
         print("Checking for duplicate values\n")
         print(self.df.duplicated().sum())
-
 
 
     def split_data(self):
@@ -109,7 +110,7 @@ class Customer:
     def train_test_split(self):
         """Splits the dataset into training and testing subsets."""
 
-        print("Training and Testing Data Splitting...")
+        print("Training and Testing Data Splitting...",end=seperator)
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.Y,
                                                                                 test_size=self.test_size,
                                                                                 random_state = self.random_state)
@@ -123,12 +124,46 @@ class Customer:
         self.X_train = scaler.fit_transform(self.X_train)
         self.X_test = scaler.transform(self.X_test)
 
+
+    def perform_grid_search(self):
+        """
+        Executes a cross-validated grid search to find the optimal SVM hyperparameters.
+
+        This method tests various combinations of 'C', 'kernel', and 'gamma' to
+        maximize model accuracy. It uses all available CPU cores (n_jobs=-1)
+        and refits the best model on the entire training set.
+
+        Returns:
+        sklearn.svm.SVC: The trained model instance with the best discovered parameters.
+        """
+
+        print("Performing Grid Search...")
+        parameter = {
+            'C': [1, 10, 50, 80, 100, 500, 1000],
+            'kernel': ['linear','poly','rbf','sigmoid'],
+            'gamma': ['scale','auto']
+
+        }
+
+        grid = GridSearchCV(SVC(random_state = self.random_state), param_grid=parameter, n_jobs = -1,
+                            verbose = 2, cv = 5, refit=True)
+
+        grid.fit(self.X_train, self.y_train)
+
+        print(f"Best parameters: {grid.best_params_}")
+        print(f"Best score: {grid.best_score_}")
+        print(f"Best estimator: {grid.best_estimator_}")
+
+        return grid.best_estimator_
+
+
     def model_training(self):
         """Trains a Support Vector Machine classifier on the training data."""
 
         svm = SVC(kernel='linear', random_state = self.random_state)
         svm.fit(self.X_train, self.y_train)
         return svm
+
 
     def model_evaluation(self, sv):
         """Evaluates the model and prints accuracy, confusion matrix, and classification report."""
@@ -139,33 +174,34 @@ class Customer:
         print("The Confusion Matrix: \n", confusion_matrix(self.y_test, y_pred, labels=[0,1]))
         print("The Accuracy Score: \n", accuracy_score(self.y_test, y_pred))
 
-    def plot_decision_boundary(self, kernel='linear', C=1.0):
+
+    def plot_decision_boundary(self, kernel='rbf', c=10, gamma = 'scale'):
         """
-        X: DataFrame or array with columns [Age, Estimated Salary]
+        X: DataFrame with columns [Age, Estimated Salary]
         y: Target array (Purchased)
         """
 
-        X_subset = self.X.iloc[:, -2:].values if hasattr(self.X, 'iloc') else self.X[:, -2:]
+        x_subset = self.X.iloc[:, -2:].values if hasattr(self.X, 'iloc') else self.X[:, -2:]
         sc = StandardScaler()
-        X_scaled = sc.fit_transform(X_subset)
+        x_scaled = sc.fit_transform(x_subset)
 
-        model = SVC(kernel=kernel, C=C)
-        model.fit(X_scaled, self.Y)
+        model = SVC(kernel=kernel, C=c, gamma= gamma)
+        model.fit(x_scaled, self.Y)
 
         h = .02
-        x_min, x_max = X_scaled[:, 0].min() - 1, X_scaled[:, 0].max() + 1
-        y_min, y_max = X_scaled[:, 1].min() - 1, X_scaled[:, 1].max() + 1
+        x_min, x_max = x_scaled[:, 0].min() - 1, x_scaled[:, 0].max() + 1
+        y_min, y_max = x_scaled[:, 1].min() - 1, x_scaled[:, 1].max() + 1
         xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                              np.arange(y_min, y_max, h))
 
-        Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-        Z = Z.reshape(xx.shape)
+        z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+        z = z.reshape(xx.shape)
 
         plt.figure(figsize=(10, 6))
-        plt.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.8)
+        plt.contourf(xx, yy, z, alpha=0.8)
 
-        plt.scatter(X_scaled[:, 0], X_scaled[:, 1], c=self.Y,
-                    cmap=plt.cm.coolwarm, edgecolors='k')
+        plt.scatter(x_scaled[:, 0], x_scaled[:, 1], c=self.Y,
+                     edgecolors='k')
 
         plt.title(f"SVM Decision Boundary (Age vs Salary)\nKernel: {kernel}")
         plt.xlabel('Age (Standardized)')
@@ -184,8 +220,9 @@ def main():
     model.feature_encoding()
     model.train_test_split()
     model.feature_scaling()
-    classifier = model.model_training()
-    model.model_evaluation(classifier)
+    best_model = model.perform_grid_search()
+    model.model_training()
+    model.model_evaluation(best_model)
     model.plot_decision_boundary()
 
 
