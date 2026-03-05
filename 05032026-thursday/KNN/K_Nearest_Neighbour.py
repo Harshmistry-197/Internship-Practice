@@ -1,3 +1,4 @@
+import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -5,14 +6,12 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
-import pickle
-
 
 seperator = f"\n\n{'-'*60}\n\n"
 
 class KNNClassifier:
 
-    def __init__(self,file_path,test_size = 0.2, random_state = 42):
+    def __init__(self,file_path,test_size = 0.3, random_state = 42):
 
         self.file_path = file_path
         self.test_size = test_size
@@ -28,7 +27,6 @@ class KNNClassifier:
         self.X_test = None
         self.y_test = None
 
-
     def load_data(self):
 
         print("Loading data...", end=seperator)
@@ -36,8 +34,6 @@ class KNNClassifier:
         print(f"Loaded Data : {self.df.shape}")
         print(f" Dropped the user_id column that is not necessary", end=seperator)
         self.df = self.df.drop(columns="user_id")
-
-
 
     def analyze_data(self):
 
@@ -56,7 +52,6 @@ class KNNClassifier:
         print("Checking for duplicate values\n")
         print(self.df.duplicated().sum())
 
-
     def split_data(self):
 
         self.analyze_data()
@@ -66,7 +61,6 @@ class KNNClassifier:
         self.X = self.df.drop(columns="purchased")
         self.Y = self.df["purchased"]
         print(f"Split Data : X {self.X.shape}  Y : {self.Y.shape}", end=seperator)
-
 
     def eda_outliers(self):
 
@@ -95,7 +89,6 @@ class KNNClassifier:
             print(f"{col} : {outlier.sum()} outliers")
         print(end=seperator)
 
-
     def feature_encoding(self):
 
         self.eda_outliers()
@@ -103,7 +96,6 @@ class KNNClassifier:
         print("Feature Encoding...", end=seperator)
         le = LabelEncoder()
         self.X['gender'] = le.fit_transform(self.X['gender'])
-
 
     def train_test_split(self):
 
@@ -123,20 +115,19 @@ class KNNClassifier:
         self.X_train = scaler.fit_transform(self.X_train)
         self.X_test = scaler.transform(self.X_test)
 
-
     def perform_grid_search(self):
 
         self.feature_scaling()
 
         print("Performing Grid Search...")
         parameter = {
-            'n_neighbors': [1, 3, 5, 7, 9, 11, 13, 15],
+            'n_neighbors': [3, 5, 7, 9, 11],
             'metric': ['euclidean', 'manhattan', 'minkowski'],
             'weights': ['uniform', 'distance']
         }
 
-        grid = GridSearchCV(KNeighborsClassifier(), param_grid=parameter, n_jobs = -1,
-                            verbose = 2, cv = 5, refit=True)
+        grid = GridSearchCV(KNeighborsClassifier(), param_grid=parameter,
+                            verbose = 2, cv = 5)
 
         grid.fit(self.X_train, self.y_train)
 
@@ -157,18 +148,20 @@ class KNNClassifier:
         print("The Confusion Matrix: \n", confusion_matrix(self.y_test, y_pred))
         print("The Accuracy Score: \n", accuracy_score(self.y_test, y_pred))
 
-        with open('model.pkl', 'wb') as file:
-            pickle.dump(knn, file)
+        return knn
 
+    def save_model(self):
+
+        knn = self.model_evaluation()
+        with open("knn_model.pkl", 'wb') as file:
+            pickle.dump(knn, file)
+        print("Model saved successfully", end=seperator)
 
 def main():
 
     model = KNNClassifier(file_path = "customer_purchase_data.csv")
 
-    model.model_evaluation()
-
-
-
+    model.save_model()
 
 if __name__ == "__main__":
     main()
