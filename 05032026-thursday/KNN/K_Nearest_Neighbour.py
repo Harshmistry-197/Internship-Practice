@@ -1,12 +1,16 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+import pickle
 
 
 seperator = f"\n\n{'-'*60}\n\n"
 
-class Customer:
+class KNNClassifier:
 
     def __init__(self,file_path,test_size = 0.2, random_state = 42):
 
@@ -33,10 +37,11 @@ class Customer:
         print(f" Dropped the user_id column that is not necessary", end=seperator)
         self.df = self.df.drop(columns="user_id")
 
-        return self.df
 
 
     def analyze_data(self):
+
+        self.load_data()
 
         print("Analyzing data... \n")
         print("The concise analysis of data\n")
@@ -54,6 +59,8 @@ class Customer:
 
     def split_data(self):
 
+        self.analyze_data()
+
         print("Splitting data...")
 
         self.X = self.df.drop(columns="purchased")
@@ -62,6 +69,8 @@ class Customer:
 
 
     def eda_outliers(self):
+
+        self.split_data()
 
         print("Eda Outliers...")
         print("Heatmap of Data", end=seperator)
@@ -87,14 +96,77 @@ class Customer:
         print(end=seperator)
 
 
+    def feature_encoding(self):
+
+        self.eda_outliers()
+
+        print("Feature Encoding...", end=seperator)
+        le = LabelEncoder()
+        self.X['gender'] = le.fit_transform(self.X['gender'])
+
+
+    def train_test_split(self):
+
+        self.feature_encoding()
+
+        print("Training and Testing Data Splitting...",end=seperator)
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.Y,
+                                                                                test_size=self.test_size,
+                                                                                random_state = self.random_state)
+
+    def feature_scaling(self):
+
+        self.train_test_split()
+
+        print("Feature Scaling...")
+        scaler = StandardScaler()
+        self.X_train = scaler.fit_transform(self.X_train)
+        self.X_test = scaler.transform(self.X_test)
+
+
+    def perform_grid_search(self):
+
+        self.feature_scaling()
+
+        print("Performing Grid Search...")
+        parameter = {
+            'n_neighbors': [1, 3, 5, 7, 9, 11, 13, 15],
+            'metric': ['euclidean', 'manhattan', 'minkowski'],
+            'weights': ['uniform', 'distance']
+        }
+
+        grid = GridSearchCV(KNeighborsClassifier(), param_grid=parameter, n_jobs = -1,
+                            verbose = 2, cv = 5, refit=True)
+
+        grid.fit(self.X_train, self.y_train)
+
+        print(f"Best parameters: {grid.best_params_}")
+        print(f"Best score: {grid.best_score_}")
+        print(f"Best estimator: {grid.best_estimator_}")
+
+        return grid.best_estimator_
+
+
+    def model_evaluation(self):
+
+        knn = self.perform_grid_search()
+
+        y_pred = knn.predict(self.X_test)
+        print("Model Evaluation...")
+        print("The Classification Report: \n", classification_report(y_pred, self.y_test))
+        print("The Confusion Matrix: \n", confusion_matrix(self.y_test, y_pred))
+        print("The Accuracy Score: \n", accuracy_score(self.y_test, y_pred))
+
+        with open('model.pkl', 'wb') as file:
+            pickle.dump(knn, file)
+
 
 def main():
 
-    model = Customer(file_path = "customer_purchase_data.csv")
-    model.load_data()
-    model.analyze_data()
-    model.split_data()
-    model.eda_outliers()
+    model = KNNClassifier(file_path = "customer_purchase_data.csv")
+
+    model.model_evaluation()
+
 
 
 
