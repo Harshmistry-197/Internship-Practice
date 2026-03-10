@@ -8,7 +8,13 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 separator = f"\n\n{'-'*100}\n\n"
 
 class Customer:
+    """
+    A class to perform customer segmentation using K-Means clustering.
+    """
+
     def __init__(self, file_path):
+        """Initializes the Customer class with the dataset path and default values."""
+
         self.file_path = file_path
         self.random_state = 42
         self.df = None
@@ -17,6 +23,8 @@ class Customer:
         self.model = None
 
     def load_data(self):
+        """Loads the CSV data from the specified file path into a pandas DataFrame."""
+
         try:
             print("Loading the data\n")
             self.df = pd.read_csv(self.file_path)
@@ -27,6 +35,11 @@ class Customer:
             print(f"File not found : {self.file_path}")
 
     def preprocessing(self):
+        """
+        Loads data and performs initial cleaning.
+
+        Includes checking for nulls, duplicates, and removing unnecessary columns.
+        """
 
         self.load_data()
         try:
@@ -48,6 +61,12 @@ class Customer:
             print("Error in Preprocessing",e)
 
     def eda(self):
+        """
+        Performs Exploratory Data Analysis (EDA).
+
+        Generates a correlation heatmap, box plots for outliers, and a scatter plot
+        of Income vs. Spending Score.
+        """
 
         self.preprocessing()
         try:
@@ -82,6 +101,7 @@ class Customer:
 
 
     def feature_encoding(self):
+        """Encodes categorical variables (Gender) into numerical format using LabelEncoder."""
 
         self.eda()
         try:
@@ -94,6 +114,7 @@ class Customer:
             print("error in feature encoding",e)
 
     def feature_scaling(self):
+        """Scales numerical features to a standard normal distribution (mean=0, variance=1)."""
 
         self.feature_encoding()
         try:
@@ -107,6 +128,11 @@ class Customer:
             print("Error in feature scaling",e)
 
     def elbow_method(self):
+        """
+        Executes the Elbow Method to help determine the optimal number of clusters.
+
+        Calculates and plots the Within-Cluster Sum of Square for 1 to 10 clusters.
+        """
 
         self.feature_scaling()
         try:
@@ -124,6 +150,7 @@ class Customer:
             print("Error in elbow method", e)
 
     def model_training(self):
+        """Fits the K-Means model with a specified number of clusters and labels the data."""
 
         self.elbow_method()
         try:
@@ -134,6 +161,11 @@ class Customer:
             print("Error in training the model", e)
 
     def visualize_clusters(self):
+        """
+        Visualizes the final clusters and their centroids.
+
+        Displays a scatter plot of segments and prints the Silhouette Score to evaluate quality.
+        """
 
         self.model_training()
         try:
@@ -154,6 +186,8 @@ class Customer:
 
 
 def main():
+    """Entry point to program"""
+
     path = "Mall_Customers.csv"
     customer = Customer(path)
     customer.visualize_clusters()
