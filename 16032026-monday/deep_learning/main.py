@@ -45,6 +45,7 @@ class TitanicDeepLearning:
     def analysis_data(self):
         """Performs EDA, visualizes correlations, and handles initial missing value imputation."""
 
+        self.load_dataset()
         try:
             print("Data Info")
             print(self.df.info(), end=separator)
@@ -69,6 +70,7 @@ class TitanicDeepLearning:
     def preprocessing_pipeline(self):
         """Defines the transformation pipeline for numeric (scaling) and categorical (One-Hot) features."""
 
+        self.analysis_data()
         try:
             print("Feature Encoding Started")
             numeric_cols = ["Age", "Fare", "Pclass", "FamilySize"]
@@ -93,6 +95,7 @@ class TitanicDeepLearning:
     def train_test_split(self):
         """Splits the processed DataFrame into training and testing sets."""
 
+        self.preprocessing_pipeline()
         try:
             print("Training And Test Data Split", end=separator)
             self.X = self.df.drop("Survived", axis=1)
@@ -107,6 +110,7 @@ class TitanicDeepLearning:
     def preprocess(self):
         """Applies the ColumnTransformer pipeline to the split data."""
 
+        self.train_test_split()
         try:
             print("Feature preprocess Started")
             self.X_train = self.preprocessing.fit_transform(self.X_train)
@@ -115,10 +119,12 @@ class TitanicDeepLearning:
         except Exception as e:
             print(e)
 
-    def build_model(self, num_features):
+    def build_model(self):
         """Constructs and compiles the Sequential ANN model."""
 
+        self.preprocess()
         try:
+            num_features = self.X_train.shape[1]
             print("Model Building Started")
             self.model = Sequential([
                 Dense(32, activation='relu', input_dim=num_features),
@@ -139,6 +145,7 @@ class TitanicDeepLearning:
     def train_model(self):
         """Trains the ANN model using early stopping to monitor validation loss."""
 
+        self.build_model()
         try:
             early_stopping = EarlyStopping(
                 monitor='val_loss',
@@ -160,6 +167,7 @@ class TitanicDeepLearning:
     def evaluate_model(self):
         """Generates predictions and prints performance metrics (Accuracy, Confusion Matrix)."""
 
+        self.train_model()
         try:
             predictions = self.model.predict(self.X_test)
             predictions = (predictions > 0.5).astype(int)
@@ -176,6 +184,7 @@ class TitanicDeepLearning:
     def plot_model(self):
         """Plots the training and validation loss curves from the training history."""
 
+        self.evaluate_model()
         plt.figure(figsize=(8, 5))
         plt.plot(self.history.history['loss'], label = 'Training Loss')
         plt.plot(self.history.history['val_loss'], label = 'Validation Loss')
@@ -189,14 +198,6 @@ def main():
     """Main execution block to instantiate and run the Titanic DL pipeline."""
 
     obj = TitanicDeepLearning("Titanic_dataset.csv")
-    obj.load_dataset()
-    obj.analysis_data()
-    obj.preprocessing_pipeline()
-    obj.train_test_split()
-    obj.preprocess()
-    obj.build_model(obj.X_train.shape[1])
-    obj.train_model()
-    obj.evaluate_model()
     obj.plot_model()
 
 if __name__ == "__main__":
