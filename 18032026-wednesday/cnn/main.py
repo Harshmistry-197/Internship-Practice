@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 seperator = f"\n\n{'-' * 100}\n\n"
 
 class CNN:
+    """A Convolutional Neural Network wrapper for MNIST digit classification."""
 
     def __init__(self):
+        """Initializes the CNN class with empty placeholders for data and model."""
 
         self.model = None
         self.X_train = None
@@ -16,6 +18,7 @@ class CNN:
         self.history = None
 
     def load_data(self):
+        """Loads MNIST dataset, normalizes pixel values, and reshapes for CNN input."""
 
         print("Loading Data")
         (self.X_train, self.y_train), (self.X_test, self.y_test) = tf.keras.datasets.mnist.load_data()
@@ -30,6 +33,7 @@ class CNN:
         print("Testing Data shape : ", self.X_test.shape, end=seperator)
 
     def build_model(self):
+        """Defines the CNN architecture, compiles it, and prints the summary."""
 
         self.load_data()
         self.model = models.Sequential([
@@ -55,6 +59,7 @@ class CNN:
         print("Layers Created succesfully", end=seperator)
 
     def train_model(self):
+        """Triggers model building and starts the training process."""
 
         self.build_model()
         self.history = self.model.fit(
@@ -65,12 +70,14 @@ class CNN:
         )
 
     def evaluate_model(self):
+        """Trains the model and evaluates its final performance on the test set."""
 
         self.train_model()
         loss, accuracy = self.model.evaluate(self.X_test, self.y_test)
         print(f"Test Loss : {loss}, Test Accuracy : {accuracy}")
 
     def plot_performance(self):
+        """Visualizes training and validation accuracy/loss using Matplotlib."""
 
         self.evaluate_model()
         try:
@@ -100,7 +107,8 @@ class CNN:
 
 
 def main():
-
+    """Entry point to instantiate the CNN class and run the full pipeline."""
+     
     obj = CNN()
     obj.plot_performance()
 
