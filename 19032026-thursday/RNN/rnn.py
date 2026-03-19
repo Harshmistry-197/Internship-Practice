@@ -53,7 +53,7 @@ class KNNmodel:
             vocab_size = len(self.tokenize.word_index) + 1
 
             self.model = Sequential([
-                Embedding(input_dim=vocab_size, output_dim=8),
+                Embedding(input_dim=vocab_size, output_dim=8, input_shape=(4,)),
                 SimpleRNN(16),
                 Dense(1, activation='sigmoid')
             ])
