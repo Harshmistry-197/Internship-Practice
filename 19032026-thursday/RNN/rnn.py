@@ -6,7 +6,12 @@ from tensorflow.keras.layers import Embedding, SimpleRNN, Dense
 
 seperator = f"\n\n{'-' * 100}\n\n"
 
-class KNNmodel:
+class RNNmodel:
+    """
+    Initializes the dataset.
+    1 is Positive Sentiment, 0 is Negative Sentiment.
+    """
+
     def __init__(self):
 
         self.data = [
@@ -23,17 +28,27 @@ class KNNmodel:
         ]
 
         self.labels = np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0])
+
+        # Initialize Tokenizer and placeholders for data and model
         self.tokenize = Tokenizer()
         self.model = None
         self.padded_sequence = None
 
     def data_preparation(self):
+        """
+        Converts raw text into numeric sequences and pads them to a uniform length.
+        """
 
         try:
             print("Data Preparation Started ")
+
+            # Create a vocabulary index based on word frequency
             self.tokenize.fit_on_texts(self.data)
 
+            # Convert sentences into lists of integers (sequences)
             sequence = self.tokenize.texts_to_sequences(self.data)
+
+            # Pad sequences with zeros at the end so all inputs have the same length
             self.padded_sequence = pad_sequences(sequence, padding='post')
 
             print(f"Word Index :\n {self.tokenize.word_index}")
@@ -46,18 +61,29 @@ class KNNmodel:
             print(f"Data Preparation Failed {e}")
 
     def model_building(self):
+        """
+        Created the Neural Network architecture: Embedding -> RNN -> Dense.
+        """
 
         self.data_preparation()
         try:
             print("Building Model")
+
+            # vocab_size is total words + 1 (to account for the 0-padding index)
             vocab_size = len(self.tokenize.word_index) + 1
 
             self.model = Sequential([
+                # Turns integers into dense vectors of fixed size (8)
                 Embedding(input_dim=vocab_size, output_dim=8, input_shape=(4,)),
+
+                # Simple Recurrent layer to process sequence data with 16 units
                 SimpleRNN(16),
+
+                # Output layer with Sigmoid for binary classification (0 to 1)
                 Dense(1, activation='sigmoid')
             ])
 
+            # Compile with Adam optimizer and Binary Cross-entropy loss
             self.model.compile(
                 optimizer='adam',
                 loss='binary_crossentropy',
@@ -72,9 +98,13 @@ class KNNmodel:
             print(f"Model Building Failed {e}")
 
     def model_training(self):
+        """
+        Trains the model on the prepared padded sequences Data.
+        """
 
         self.model_building()
         try:
+            # Training the model for 20 iterations over the dataset
             print("Model Training Started")
             self.model.fit(
                 self.padded_sequence,
@@ -86,12 +116,22 @@ class KNNmodel:
             print(f"Model Training Failed {e}")
 
     def predict(self):
+        """
+        Preprocesses a new test string and predicts its sentiment.
+        """
+
         self.model_training()
         try:
             test = ["movie was amazing"]
+
+            # Transform test text using the SAME tokenizer used for training
             sequence = self.tokenize.texts_to_sequences(test)
+
+            # Pad to match the exact input length the model expects
             padded = pad_sequences(sequence, padding='post',
                                    maxlen=self.padded_sequence.shape[1])
+
+            # Generate prediction (a value between 0 and 1)
             predict = self.model.predict(padded)
             print("Prediction : ", predict)
 
@@ -105,7 +145,11 @@ class KNNmodel:
 
 
 def main():
-    obj = KNNmodel()
+    """
+    Entry point of code.
+    """
+
+    obj = RNNmodel()
     obj.predict()
 
 
