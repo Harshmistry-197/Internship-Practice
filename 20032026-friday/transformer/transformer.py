@@ -92,6 +92,44 @@ class TransformerBlock(layers.Layer):
         return self.layernorm2(out1 + ffn_output)
 
 
+class SampleGPT(tf.keras.Model):
+    """
+    A simplified GPT-style generative model.
+
+    Args:
+        vocab_size (int): Size of the vocabulary.
+        d_model (int): Embedding dimension.
+        num_heads (int): Number of attention heads per block.
+        num_layers (int): Number of Transformer blocks to stack.
+        max_len (int): Maximum sequence length for positional embeddings.
+    """
+
+    def __init__(self, vocab_size, d_model=64, num_heads=4, num_layers=2, max_len=100):
+        super().__init__()
+        self.d_model = d_model
+        self.embedding = layers.Embedding(vocab_size, d_model)
+        self.pos_emb = layers.Embedding(max_len, d_model)
+        self.blocks = [TransformerBlock(d_model, num_heads, d_model * 4) for _ in range(num_layers)]
+        self.dropout = layers.Dropout(0.1)
+        self.final_layer = layers.Dense(vocab_size)
+
+    def call(self, x, training=False):
+        """Forward pass to predict the next token in a sequence."""
+
+        seq_len = tf.shape(x)[1]
+        positions = tf.range(start=0, limit=seq_len, delta=1)
+
+        # Combine token embeddings and positional embeddings
+        x = self.embedding(x) + self.pos_emb(positions)
+        x = self.dropout(x, training=training)
+
+        # Pass through stacked Transformer blocks
+        for block in self.blocks:
+            x = block(x, training=training)
+
+        # Map back to vocabulary logits
+        return self.final_layer(x)
+
 
 def main():
     """Main execution script to train the model and generate text."""
@@ -123,6 +161,32 @@ def main():
         ys.append(all_encoded[i + 1: i + seq_len + 1])
 
     x, y = np.array(xs), np.array(ys)
+
+    # Model configuration and compilation
+    model = SampleGPT(vocab_size=tokenizer.vocab_size)
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=0.005),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    )
+
+    print("--- Training Started ---")
+    model.fit(x, y, epochs=80, verbose=1)
+    print("--- Training Complete ---\n")
+
+    def generate(prompt, length=4):
+        tokens = tokenizer.encode(prompt)
+        for _ in range(length):
+            input_tokens = np.array([tokens])
+            preds = model(input_tokens, training=False)
+
+            # Pick the token with the highest logit for the last position
+            next_id = tf.argmax(preds[0, -1, :]).numpy()
+            tokens.append(next_id)
+        return tokenizer.decode(tokens)
+
+    # Test the model
+    print(f"Result: {generate('artificial intelligence')}")
+
 
 if __name__ == "__main__":
     main()
