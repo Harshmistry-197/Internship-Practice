@@ -32,6 +32,66 @@ class Tokenizer:
         return " ".join([self.idx2word[int(t)] for t in tokens])
 
 
+class TransformerBlock(layers.Layer):
+    """
+    A standard Transformer decoder block with Multi-Head Attention and Feed-Forward Network.
+
+    Args:
+        d_model (int): The dimensionality of the input and output embeddings.
+        num_heads (int): Number of attention heads.
+        dff (int): Hidden layer size of the feed-forward network.
+        rate (float): Dropout rate.
+    """
+
+    def __init__(self, d_model, num_heads, dff, rate=0.1):
+        """Initializes a single Transformer block (Decoder layer)."""
+
+        super().__init__()
+
+        # Multi-Head Attention mechanism
+        self.mha = layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model)
+
+        # Point-wise Feed-Forward Network
+        self.ffn = tf.keras.Sequential([
+            layers.Dense(dff, activation='relu'),
+            layers.Dense(d_model)
+        ])
+
+        # Layer normalization and dropout for residual connections
+        self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
+        self.dropout1 = layers.Dropout(rate)
+        self.dropout2 = layers.Dropout(rate)
+
+    def call(self, x, training=False):
+        """
+        Forward pass for the Transformer block.
+        Applies causal masking to ensure the model only looks at past tokens.
+        """
+
+        seq_len = tf.shape(x)[1]
+
+        # Create a causal look-ahead mask (Lower Triangular Matrix)
+        i = tf.range(seq_len)[:, tf.newaxis]
+        j = tf.range(seq_len)
+        mask = i >= j
+        mask = tf.reshape(mask, (1, seq_len, seq_len))
+
+        # Multi-head attention over the input sequence
+        attn_output = self.mha(query=x, value=x, key=x, attention_mask=mask, training=training)
+        attn_output = self.dropout1(attn_output, training=training)
+
+        # Residual connection 1
+        out1 = self.layernorm1(x + attn_output)
+
+        # Feed-forward network pass
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+
+        # Residual connection 2
+        return self.layernorm2(out1 + ffn_output)
+
+
 
 def main():
     """Main execution script to train the model and generate text."""
