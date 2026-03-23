@@ -5,7 +5,7 @@ description = ""
 authors = [
     {name = "Harshmistry-197",email = "harshmistry072004@gmail.com"}
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.13,<4.0"
 dependencies = [
     "pandas (>=3.0.0,<4.0.0)",
     "flask (>=3.1.2,<4.0.0)",
@@ -24,7 +24,10 @@ dependencies = [
     "imblearn (>=0.0,<0.1)",
     "category-encoders (>=2.9.0,<3.0.0)",
     "mlxtend (>=0.24.0,<0.25.0)",
-    "tensorflow (>=2.21.0,<3.0.0)"
+    "tensorflow (>=2.21.0,<3.0.0)",
+    "langchain-core (>=1.2.20,<2.0.0)",
+    "langchain-ollama (>=1.0.1,<2.0.0)",
+    "langchain (>=1.2.13,<2.0.0)"
 ]
 
 
