@@ -31,22 +31,23 @@ llm = ChatGroq(
 model = llm.bind_tools([search])
 
 query = st.text_input("Enter your query")
-result = model.invoke(query)
-
-tool_call = result.tool_calls[0]
-
-search_results = search.invoke(tool_call["args"])
-
-tool_message = ToolMessage(
-    content = str(search_results),
-    tool_call_id = tool_call["id"]
-)
-
-final_result = model.invoke([
-    HumanMessage(content = query),
-    result,
-    tool_message
-])
 
 if query:
-    st.success(final_result.content)
+    messages = [HumanMessage(content=query)]
+
+    result = model.invoke(messages)
+    messages.append(result)
+
+    if result.tool_calls:
+        for tool_call in result.tool_calls:
+            search_results = search.invoke(tool_call["args"])
+
+            messages.append(ToolMessage(
+                content=str(search_results),
+                tool_call_id=tool_call["id"]
+            ))
+
+        final_response = model.invoke(messages)
+        st.success(final_response.content)
+    else:
+        st.success(result.content)
