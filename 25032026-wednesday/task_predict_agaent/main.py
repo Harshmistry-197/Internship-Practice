@@ -39,22 +39,28 @@ tasks_chain = task_prompt | llm
                                  " Functional and Non-Functional software requirements")
 def generate_requirements(text: str):
     """Generate software requirements from raw text"""
-
-    return requirement_chain.invoke({"text": text}).content
+    try:
+        return requirement_chain.invoke({"text": text}).content
+    except Exception as e:
+        print(e)
 
 @tool("generate_user_stories", description="Converts a list of software requirements into structured user stories using "
                                  "the 'As a, I want, So that' format.")
 def generate_user_stories(requirement: str):
     """Convert Requirements into user stories"""
-
-    return user_stories_chain.invoke({"requirements": requirement}).content
+    try:
+        return user_stories_chain.invoke({"requirements": requirement}).content
+    except Exception as e:
+        print(e)
 
 @tool("generate_task", description="Generates a structured list of actionable development tasks based on "
                                    "provided user stories.")
 def generate_task(user_stories: str):
     """Generate development tasks from user stories"""
-
-    return tasks_chain.invoke({"user_stories": user_stories}).content
+    try:
+       return tasks_chain.invoke({"user_stories": user_stories}).content
+    except Exception as e:
+        print(e)
 
 
 tools = [
