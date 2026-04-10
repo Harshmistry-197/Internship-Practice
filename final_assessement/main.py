@@ -30,8 +30,8 @@ config={"configurable": {"thread_id": thread_id}}
 
 prompt = "You are a helpful assistant. Use the provided context to answer questions."
 agent = create_agent(
-            model=MODEL,
-            tools=[create_retriever],
+            model=llm,
+            tools=[],
             middleware=[summarization],
             checkpointer=memory,
             system_prompt=prompt
