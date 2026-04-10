@@ -12,8 +12,8 @@ embedding_model = os.getenv("EMBEDDING_MODEL")
 base_url = os.getenv("BASE_URL")
 
 
-@tool
 def create_retriever():
+    """Created the embedding, chunks and then stored to vector db"""
     try:
         # data Load
         all_docs = []
