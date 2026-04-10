@@ -1,5 +1,5 @@
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_community.vectorstores import FAISS
+from langchain_core.tools import tool
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -12,6 +12,7 @@ embedding_model = os.getenv("EMBEDDING_MODEL")
 base_url = os.getenv("BASE_URL")
 
 
+@tool
 def create_retriever():
     try:
         # data Load
