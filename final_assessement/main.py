@@ -28,6 +28,15 @@ retriever = create_retriever()
 thread_id = "thread_1"
 config={"configurable": {"thread_id": thread_id}}
 
+prompt = "You are a helpful assistant. Use the provided context to answer questions."
+agent = create_agent(
+            model=MODEL,
+            tools=[create_retriever],
+            middleware=[summarization],
+            checkpointer=memory,
+            system_prompt=prompt
+        )
+
 while True:
     try:
         user_input = input("user: ")
@@ -37,21 +46,6 @@ while True:
 
         data = retriever.invoke(user_input)
         context = "\n".join([d.page_content for d in data])
-
-        prompt = f"""
-        Use the context to answer the query:
-        
-        CONTEXT: {context}
-        
-        USER: {user_input}
-        """
-        agent = create_agent(
-            model=MODEL,
-            tools=[],
-            middleware=[summarization],
-            checkpointer=memory,
-            system_prompt=prompt
-        )
 
         result = agent.invoke(
             {"messages": [{"role": "user", "content": user_input}]},
