@@ -14,7 +14,7 @@ memory=connect()
 llm = ChatOllama(
     model=MODEL,
     temperature=0.3,
-    base_url="http://172.16.1.224:11434"
+    base_url=BASE_URL
 )
 
 summarization = SummarizationMiddleware(
@@ -47,9 +47,21 @@ while True:
         data = retriever.invoke(user_input)
         context = "\n".join([d.page_content for d in data])
 
+        final_prompt = f"""
+        You are a helpful assistant. Answer ONLY from the given context.
+        If the answer is not in context, say "I don't know".
+
+        Context:
+        {context}
+
+        User Question:
+        {user_input}
+        """
+
         result = agent.invoke(
-            {"messages": [{"role": "user", "content": user_input}]},
-            config=config)
+            {"messages": [{"role": "user", "content": final_prompt}]},
+            config=config
+        )
 
         response = result["messages"][-1].content
 
